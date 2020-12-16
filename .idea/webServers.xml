@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="85c5c1bb-c7b5-488e-9242-05f01106c1c4" name="ppu" url="http://localhost">
+        <fileTransfer mountedRoot="C:\Users\njche\WebstormProjects\ppu-deploy" accessType="MOUNT" port="0" />
+      </webServer>
+    </option>
+  </component>
+</project>
