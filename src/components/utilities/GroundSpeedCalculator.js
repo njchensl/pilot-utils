@@ -1,44 +1,23 @@
-import {Component} from "react/cjs/react.production.min";
-import {Button, Col, Form, FormGroup, Input, Jumbotron, Label} from "reactstrap";
-import {RegistrationFormState} from "../ContactForm";
+import {aviationAngleToMathAngle, degreeToRadian, headingIsValid} from "./CrosswindCalculator";
 import {generateInputField, generateInputFieldFull, Vector2} from "../../shared/UtilFunctions";
 import {ErrorBanner} from "../../shared/Utilities";
+import {Component} from "react";
+import {Button, Col, Form, FormGroup, Input, Label} from "reactstrap";
 
-class CrosswindCalculatorState {
+class GroundSpeedCalculatorState {
     fieldsAreValid: boolean;
+    heading: number;
+    ias: number;
     windHeading: number;
     windSpeed: number;
-    ias: number;
-    targetTrack: number;
-    heading: number;
+    groundSpeed: number;
 }
 
-
-export function aviationAngleToMathAngle(theta: number): number {
-    return 450 - theta;
-}
-
-export function mathAngleToAviationAngle(theta: number): number {
-    return 450 - theta;
-}
-
-export function degreeToRadian(deg: number): number {
-    return Math.PI * deg / 180;
-}
-
-export function readianToDegree(rad: number): number {
-    return rad / Math.PI * 180;
-}
-
-export function headingIsValid(hdg: number): boolean {
-    return hdg <= 360 && hdg >= 0;
-}
-
-export default class CrosswindCalculator extends Component {
+export default class GroundSpeedCalculator extends Component {
     constructor(props) {
         super(props);
 
-        let state = new CrosswindCalculatorState();
+        let state = new GroundSpeedCalculatorState();
         state.fieldsAreValid = true;
         this.state = state;
         this.handleSubmit = this.handleSubmit.bind(this);
@@ -47,63 +26,30 @@ export default class CrosswindCalculator extends Component {
 
     handleInputChange(event) {
         const target = event.target;
-        let newState: CrosswindCalculatorState = this.state;
+        let newState: GroundSpeedCalculatorState = this.state;
         newState[target.name] = target.type === "checkbox" ? target.checked : Number(target.value);
         this.setState(newState);
     }
 
-    fieldsAreValid(): boolean {
-        return headingIsValid(this.state.windHeading) && headingIsValid(this.state.targetTrack) && this.state.ias >= 0 && this.state.windSpeed >= 0;
-    }
-
     handleSubmit(event) {
-        let state = this.state;
-        // alert(JSON.stringify(state));
+        let state: GroundSpeedCalculatorState = this.state;
         state.fieldsAreValid = this.fieldsAreValid();
         state.windHeading += 180;
         if (state.fieldsAreValid) {
-            // do calculations
             let windMathAngle = degreeToRadian(aviationAngleToMathAngle(state.windHeading));
-            let trackMathAngle = degreeToRadian(aviationAngleToMathAngle(state.targetTrack));
+            let headingMathAngle = degreeToRadian(aviationAngleToMathAngle(state.heading));
             let windVec = new Vector2(Math.cos(windMathAngle), Math.sin(windMathAngle)).normalized().multiply(state.windSpeed);
-            let unitTrackVec = new Vector2(Math.cos(trackMathAngle), Math.sin(trackMathAngle)).normalized();
-            let ias = state.ias;
-            let angle = trackMathAngle;
-            let resultantTrack = unitTrackVec;
-            let resultantHeading = null;
-            for (let i = 0; i < 500; i++) {
-                let heading = new Vector2(Math.cos(angle), Math.sin(angle)).normalized().multiply(state.ias);
-                resultantHeading = heading;
-                let trackVec = heading.add(windVec);
-                resultantTrack = trackVec
-                // console.log(JSON.stringify(trackVec.normalized()));
-                let angleDiff = trackVec.normalized().magnitudeCross(unitTrackVec);
-                //console.log(JSON.stringify(angleDiff));
-                if (angleDiff > 0) {
-                    // need to rotate counterclockwise
-                    angle += Math.abs(angleDiff) * 0.1;
-                } else {
-                    angle -= Math.abs(angleDiff) * 0.1;
-                }
-
-            }
-            // console.log("Target track" + JSON.stringify(unitTrackVec));
-            // console.log("Resultant track" + JSON.stringify(resultantTrack));
-            // console.log("Resultant heading" + JSON.stringify(resultantHeading));
-            // console.log("Wind vector" + JSON.stringify(windVec));
-            let angleDeg = mathAngleToAviationAngle(readianToDegree(angle));
-            // normalize
-            while (angleDeg > 360) {
-                angleDeg -= 360;
-            }
-            while (angleDeg < 0) {
-                angleDeg += 360;
-            }
-            state.heading = angleDeg;
+            let planeVec = new Vector2(Math.cos(headingMathAngle), Math.sin(headingMathAngle)).normalized().multiply(state.ias);
+            let groundSpeedVec = planeVec.add(windVec);
+            state.groundSpeed = groundSpeedVec.magnitude();
         }
         state.windHeading -= 180;
         this.setState(state);
         event.preventDefault();
+    }
+
+    fieldsAreValid(): boolean {
+        return headingIsValid(this.state.windHeading) && headingIsValid(this.state.heading) && this.state.ias >= 0 && this.state.windSpeed >= 0;
     }
 
     render() {
@@ -112,7 +58,7 @@ export default class CrosswindCalculator extends Component {
                 <div className="container">
                     <div className="row row-content">
                         <div className="col-12 mt-md-5 mb-md-3">
-                            <h3>Crosswind Heading Calculator</h3>
+                            <h3>Ground Seed Calculator</h3>
                         </div>
                         <div className="col-12">
                             {
@@ -138,19 +84,19 @@ export default class CrosswindCalculator extends Component {
                                 {/*    </Col>*/}
                                 {/*</FormGroup>*/}
                                 {/*<FormGroup row>*/}
-                                {/*    <Label htmlFor="ias" md={2}>TAS</Label>*/}
+                                {/*    <Label htmlFor="heading" md={2}>Heading</Label>*/}
                                 {/*    <Col md={10}>*/}
-                                {/*        <Input type="ias" id="ias" name="ias" placeholder="TAS" value={this.state.ias}/>*/}
+                                {/*        <Input type="heading" id="heading" name="heading"*/}
+                                {/*               placeholder="Heading" value={this.state.heading}/>*/}
                                 {/*    </Col>*/}
                                 {/*</FormGroup>*/}
                                 {/*<FormGroup row>*/}
-                                {/*    <Label htmlFor="targetTrack" md={2}>Course</Label>*/}
+                                {/*    <Label htmlFor="ias" md={2}>IAS</Label>*/}
                                 {/*    <Col md={10}>*/}
-                                {/*        <Input type="targetTrack" id="targetTrack" name="targetTrack"*/}
-                                {/*               placeholder="Course" value={this.state.targetTrack}/>*/}
+                                {/*        <Input type="ias" id="ias" name="ias" placeholder="IAS" value={this.state.ias}/>*/}
                                 {/*    </Col>*/}
                                 {/*</FormGroup>*/}
-                                {generateInputFieldFull("number", "Course", "Course", "targetTrack", this.state)}
+                                {generateInputField("number", "Heading", this.state)}
                                 {generateInputFieldFull("number", "TAS", "TAS", "ias", this.state)}
                                 {generateInputFieldFull("number", "Wind Direction", "Wind Direction", "windHeading", this.state)}
                                 {generateInputField("number", "Wind Speed", this.state)}
@@ -162,10 +108,10 @@ export default class CrosswindCalculator extends Component {
                                     </Col>
                                 </FormGroup>
                                 <FormGroup row className="mt-5">
-                                    <Label htmlFor="heading" md={2}>Target Heading</Label>
+                                    <Label htmlFor="groundSpeed" md={2}>Ground Speed</Label>
                                     <Col md={10}>
-                                        <Input type="heading" id="heading" name="heading"
-                                               placeholder="DO NOT TYPE INTO THIS FIELD" value={this.state.heading}/>
+                                        <Input type="groundSpeed" id="groundSpeed" name="groundSpeed"
+                                               placeholder="DO NOT TYPE INTO THIS FIELD" value={this.state.groundSpeed}/>
                                     </Col>
                                 </FormGroup>
                             </Form>

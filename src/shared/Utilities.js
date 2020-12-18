@@ -1,6 +1,7 @@
 import {Component} from "react";
 import CrosswindCalculator from "../components/utilities/CrosswindCalculator";
 import {Jumbotron} from "reactstrap";
+import GroundSpeedCalculator from "../components/utilities/GroundSpeedCalculator";
 
 export class UtilityInfo {
     id: number;
@@ -47,6 +48,11 @@ const Utilities: Array<UtilityInfo> =
             "id": 0,
             "name": "Crosswind Calculator",
             "component": CrosswindCalculator
+        },
+        {
+            "id": 1,
+            "name": "Ground Speed Calculator",
+            "component": GroundSpeedCalculator
         }
     ];
 
